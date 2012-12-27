@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+                    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd
+                    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:mysql.properties</value>
+			</list>
+		</property>
+	</bean> 
+    
+	<bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource">
+		<property name="driverClass" value="${jdbc.driverClassName}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="idleConnectionTestPeriodInMinutes" value="${idleConnectionTestPeriodInMinutes}" />
+		<property name="idleMaxAgeInMinutes" value="${idleMaxAgeInMinutes}" />
+		<property name="maxConnectionsPerPartition" value="${maxConnectionsPerPartition}" />
+		<property name="minConnectionsPerPartition"   value="${minConnectionsPerPartition}" />
+		<property name="partitionCount" value="${partitionCount}" />
+		<property name="acquireIncrement" value="${acquireIncrement}" />
+		<property name="statementsCacheSize" value="${statementsCacheSize}" />
+		<property name="releaseHelperThreads" value="${releaseHelperThreads}" />
+	</bean>
+
+	<!--事务处理 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">        
+    	<property name="dataSource" ref="dataSource"/>
+    </bean>
+
+	<bean id="movieDao" class="com.lenovo.tv.dao.MovieDao" />
+
+	<!-- quartz define -->
+	<bean id="contentIncrementJob" class="com.lenovo.tv.schedule.ContentIncrementJob" />
+
+	<bean id="contentIncrementJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean" >
+        <property name="targetObject" ref="contentIncrementJob" />
+        <property name="targetMethod" value="execute" />
+    </bean>
+
+    <bean id="contentIncrementTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean" >
+        <property name="jobDetail" ref="contentIncrementJobDetail" />
+        <property name="cronExpression" value="50 49 11 * * ?" />
+    </bean>
+
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+	    <property name="triggers" >
+            <list>
+                <ref bean="contentIncrementTrigger" />
+            </list>
+        </property>
+    </bean>
+    
+    <context:component-scan base-package="com.lenovo.tv" />
+	<context:annotation-config />
+    <tx:annotation-driven />
+    
+</beans>
