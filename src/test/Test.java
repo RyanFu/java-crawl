@@ -13,7 +13,7 @@ public class Test {
 		if (match.find()) {
 			int times = match.groupCount();
 			for (int i=0;i<=times;i++) {
-//				System.out.println("group : " + i + " : " + match.group(i));
+				System.out.println("group : " + i + " : " + match.group(i));
 			}
 		}
 	}
